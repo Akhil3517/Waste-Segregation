@@ -634,18 +634,14 @@ def mobile_report_garbage_endpoint():
         if not location.strip() and (not latitude or not longitude):
             return jsonify({"error": "Location information is required"}), 400
         
-        # Save image if provided
+        # Store image in MongoDB if provided
+        image_data = None
         image_filename = None
         if file:
-            timestamp = int(time.time())
-            filename = f"garbage_report_{timestamp}_{file.filename}"
-            upload_folder = "uploads"
-            if not os.path.exists(upload_folder):
-                os.makedirs(upload_folder)
-            
-            file_path = os.path.join(upload_folder, filename)
-            file.save(file_path)
-            image_filename = filename
+            # Read image data as binary
+            image_data = file.read()
+            image_filename = file.filename
+            print(f"📸 Image stored in MongoDB: {image_filename} ({len(image_data)} bytes)")
         
         # Create report data
         report_data = {
@@ -655,7 +651,8 @@ def mobile_report_garbage_endpoint():
             "longitude": float(longitude) if longitude else None,
             "description": description,
             "submittedBy": "Mobile App User",
-            "image": image_filename,
+            "image_filename": image_filename,
+            "image_data": image_data,  # Store binary image data directly in MongoDB
             "status": "pending",
             "createdAt": datetime.utcnow(),
             "updatedAt": datetime.utcnow(),
@@ -671,16 +668,27 @@ def mobile_report_garbage_endpoint():
                 "success": True,
                 "message": "Garbage report submitted successfully!",
                 "report_id": str(result.inserted_id),
-                "report": report_data
+                "report": {
+                    "id": str(result.inserted_id),
+                    "type": report_data["type"],
+                    "location": report_data["location"],
+                    "description": report_data["description"],
+                    "status": report_data["status"],
+                    "createdAt": report_data["createdAt"].isoformat(),
+                    "has_image": image_data is not None
+                }
             }), 200
         else:
-            # Fallback to file storage
+            # Fallback to file storage (for development)
             import json
             import uuid
             
             report_data["id"] = str(uuid.uuid4())
             report_data["createdAt"] = report_data["createdAt"].isoformat()
             report_data["updatedAt"] = report_data["updatedAt"].isoformat()
+            
+            # Remove binary data for JSON storage
+            report_data.pop("image_data", None)
             
             reports_file = "reports.json"
             try:
@@ -1253,7 +1261,7 @@ def get_request_stats():
 
 @app.route('/api/requests/<request_id>/image', methods=['GET'])
 def get_request_image(request_id):
-    """Get the image for a specific request"""
+    """Get the image for a specific request from MongoDB"""
     try:
         if requests_collection is not None:
             # Find the request in MongoDB
@@ -1261,9 +1269,31 @@ def get_request_image(request_id):
             if not request_data:
                 return jsonify({"error": "Request not found"}), 404
             
-            image_path = request_data.get("imagePath")
+            # Get image data from MongoDB
+            image_data = request_data.get("image_data")
+            if not image_data:
+                return jsonify({"error": "No image associated with this report"}), 404
+            
+            # Create response with image data
+            from io import BytesIO
+            from flask import Response
+            
+            # Determine content type based on filename
+            filename = request_data.get("image_filename", "")
+            if filename.lower().endswith('.jpg') or filename.lower().endswith('.jpeg'):
+                content_type = 'image/jpeg'
+            elif filename.lower().endswith('.png'):
+                content_type = 'image/png'
+            else:
+                content_type = 'image/jpeg'  # Default
+            
+            print(f"📸 Serving image from MongoDB: {filename} ({len(image_data)} bytes)")
+            
+            # Return image data directly
+            return Response(image_data, mimetype=content_type)
+            
         else:
-            # Fallback: Find the request in JSON file
+            # Fallback: Find the request in JSON file (for development)
             import json
             reports_file = "reports.json"
             
@@ -1282,13 +1312,24 @@ def get_request_image(request_id):
             if not request_data:
                 return jsonify({"error": "Request not found"}), 404
             
-            image_path = request_data.get("imagePath")
-        
-        if not image_path or not os.path.exists(image_path):
-            return jsonify({"error": "Image not found"}), 404
-        
-        # Return the image file
-        return send_file(image_path, mimetype='image/*')
+            # Check for image field (could be 'image' or 'imagePath')
+            image_filename = request_data.get("image") or request_data.get("imagePath")
+            
+            if not image_filename:
+                return jsonify({"error": "No image associated with this report"}), 404
+            
+            # Construct the full path to the image
+            upload_folder = "uploads"
+            image_path = os.path.join(upload_folder, image_filename)
+            
+            if not os.path.exists(image_path):
+                return jsonify({
+                    "error": f"Image file not found: {image_filename}",
+                    "message": "Image may have been lost during deployment. This is a known issue with Railway's ephemeral file system."
+                }), 404
+            
+            # Return the image file
+            return send_file(image_path, mimetype='image/*')
         
     except Exception as e:
         print(f"❌ Error fetching image: {e}")
