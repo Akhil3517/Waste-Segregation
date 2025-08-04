@@ -654,8 +654,8 @@ def mobile_report_garbage_endpoint():
             "image_filename": image_filename,
             "image_data": image_data,  # Store binary image data directly in MongoDB
             "status": "pending",
-            "createdAt": datetime.utcnow(),
-            "updatedAt": datetime.utcnow(),
+            "createdAt": datetime.now(datetime.UTC),
+            "updatedAt": datetime.now(datetime.UTC),
             "source": "mobile_app"
         }
         
@@ -730,11 +730,15 @@ def mobile_dashboard_endpoint():
             # Get recent reports (last 10)
             recent_reports = list(requests_collection.find().sort("createdAt", -1).limit(10))
             
-            # Convert ObjectId to string
+            # Convert ObjectId to string and exclude binary data
             for req in recent_reports:
                 req["_id"] = str(req["_id"])
                 req["createdAt"] = req["createdAt"].isoformat()
                 req["updatedAt"] = req["updatedAt"].isoformat()
+                # Remove binary image data to prevent JSON serialization error
+                req.pop("image_data", None)
+                # Add a flag to indicate if image exists
+                req["has_image"] = "image_data" in req or "image_filename" in req
             
             return jsonify({
                 "success": True,
