@@ -25,15 +25,12 @@ const ReportGarbage = ({ navigation }) => {
 
   const requestLocationPermission = async () => {
     try {
-      console.log('Requesting location permission...');
-      
       // Check if permission is already granted
       const checkResult = await PermissionsAndroid.check(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
       );
       
       if (checkResult) {
-        console.log('Location permission already granted');
         setHasLocationPermission(true);
         // If permission is already granted, try to get location
         getCurrentLocation();
@@ -52,19 +49,14 @@ const ReportGarbage = ({ navigation }) => {
         }
       );
       
-      console.log('Permission result:', granted);
-      
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         setHasLocationPermission(true);
-        console.log('Location permission granted');
         // Permission granted, now try to get location
         getCurrentLocation();
       } else {
-        console.log('Location permission denied');
         setHasLocationPermission(false);
       }
     } catch (err) {
-      console.error('Error requesting location permission:', err);
       setHasLocationPermission(false);
     }
   };
@@ -84,13 +76,10 @@ const ReportGarbage = ({ navigation }) => {
       
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         setHasCameraPermission(true);
-        console.log('Camera permission granted');
       } else {
         setHasCameraPermission(false);
-        console.log('Camera permission denied');
       }
     } catch (err) {
-      console.error('Error requesting camera permission:', err);
       setHasCameraPermission(false);
     }
   };
@@ -128,7 +117,6 @@ const ReportGarbage = ({ navigation }) => {
         setSelectedImage(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Error taking photo:', error);
       Alert.alert('Error', 'Failed to take photo. Please try again.');
     }
   };
@@ -148,7 +136,6 @@ const ReportGarbage = ({ navigation }) => {
         setSelectedImage(result.assets[0].uri);
       }
     } catch (error) {
-      console.error('Error picking image:', error);
       Alert.alert('Error', 'Failed to pick image. Please try again.');
     }
   };
@@ -164,13 +151,11 @@ const ReportGarbage = ({ navigation }) => {
 
       setIsGettingLocation(true);
       setLocation('Getting location...');
-      console.log('Getting current location...');
       
       // Try multiple strategies like the frontend
       await tryLocationStrategies();
       
     } catch (error) {
-      console.error('Error in getCurrentLocation:', error);
       Alert.alert('Error', 'Failed to get location. Please enter location manually.');
       setIsGettingLocation(false);
     }
@@ -186,7 +171,6 @@ const ReportGarbage = ({ navigation }) => {
         async (position) => {
           clearTimeout(timeout);
           const { latitude, longitude, accuracy } = position.coords;
-          console.log('Location obtained:', { latitude, longitude, accuracy });
           
           try {
             // Try to get real address using OpenStreetMap Nominatim API
@@ -198,10 +182,8 @@ const ReportGarbage = ({ navigation }) => {
             setLocationAccuracy(accuracy ? `${Math.round(accuracy)}m` : 'Unknown');
             setLocationMethod('GPS');
             
-            console.log('Location set with real address:', locationText);
             resolve(locationText);
           } catch (error) {
-            console.log('Real address failed, using fallback:', error);
             // Fallback to simple location name
             const locationName = getLocationName(latitude, longitude);
             const locationText = `${locationName}\n📍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
@@ -211,13 +193,11 @@ const ReportGarbage = ({ navigation }) => {
             setLocationAccuracy(accuracy ? `${Math.round(accuracy)}m` : 'Unknown');
             setLocationMethod('GPS');
             
-            console.log('Location set with fallback:', locationText);
             resolve(locationText);
           }
         },
         (error) => {
           clearTimeout(timeout);
-          console.error('Geolocation error:', error);
           reject(error);
         },
         {
@@ -247,19 +227,15 @@ const ReportGarbage = ({ navigation }) => {
 
     for (let i = 0; i < strategies.length; i++) {
       const strategy = strategies[i];
-      console.log(`Trying strategy ${i + 1}: ${strategy.name}`);
       
       try {
         const result = await tryGetLocation(strategy.options);
         if (result) {
-          console.log(`Strategy ${strategy.name} succeeded:`, result);
           return;
         }
       } catch (error) {
-        console.log(`${strategy.name} failed:`, error);
         if (i === strategies.length - 1) {
           // All strategies failed - use a mock location for testing
-          console.log('All strategies failed, using mock location for testing');
           const mockLocation = 'Test Location\n📍 40.7128, -74.0060';
           setLocation(mockLocation);
           setCoordinates({ latitude: 40.7128, longitude: -74.0060 });
@@ -276,13 +252,10 @@ const ReportGarbage = ({ navigation }) => {
       Geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude, accuracy } = position.coords;
-          console.log('Location obtained:', { latitude, longitude, accuracy });
           
           try {
             // Test exact location name first
-            console.log('=== TESTING EXACT LOCATION ===');
             await testExactLocation(latitude, longitude);
-            console.log('=== END TEST ===');
             
             // Try to get real address first
             const realAddress = await getRealAddress(latitude, longitude);
@@ -294,10 +267,8 @@ const ReportGarbage = ({ navigation }) => {
             setLocationMethod('GPS');
             setIsGettingLocation(false);
             
-            console.log('Location set with real address:', locationText);
             resolve(locationText);
           } catch (error) {
-            console.log('Real address failed, using fallback:', error);
             // Fallback to simple location name
             const locationName = getLocationName(latitude, longitude);
             const locationText = `${locationName}\n📍 ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
@@ -308,12 +279,10 @@ const ReportGarbage = ({ navigation }) => {
             setLocationMethod('GPS');
             setIsGettingLocation(false);
             
-            console.log('Location set with fallback:', locationText);
             resolve(locationText);
           }
         },
         (error) => {
-          console.error('Geolocation error:', error);
           reject(error);
         },
         options
@@ -443,7 +412,6 @@ const ReportGarbage = ({ navigation }) => {
 
   const getRealAddress = async (latitude, longitude) => {
     try {
-      console.log('Getting real address for:', latitude, longitude);
       
       // Use Leaflet-compatible OpenStreetMap Nominatim API (completely free)
       const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&accept-language=en&extratags=1`;
@@ -461,7 +429,6 @@ const ReportGarbage = ({ navigation }) => {
       }
       
       const data = await response.json();
-      console.log('Nominatim response:', data);
       
       if (data && data.display_name) {
         // Extract the most relevant parts for a clean address
@@ -503,18 +470,14 @@ const ReportGarbage = ({ navigation }) => {
           }
         }
         
-        console.log('Clean address from Nominatim:', cleanAddress);
         return cleanAddress;
       } else {
         throw new Error('No address data received');
       }
       
     } catch (error) {
-      console.error('Nominatim lookup failed:', error);
-      
       // Fallback to BigDataCloud (also free)
       try {
-        console.log('Trying BigDataCloud fallback...');
         const bigDataUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`;
         
         const bigDataResponse = await fetch(bigDataUrl, {
@@ -526,7 +489,6 @@ const ReportGarbage = ({ navigation }) => {
         
         if (bigDataResponse.ok) {
           const bigDataData = await bigDataResponse.json();
-          console.log('BigDataCloud fallback response:', bigDataData);
           
           if (bigDataData && bigDataData.locality) {
             let addressParts = [];
@@ -541,12 +503,11 @@ const ReportGarbage = ({ navigation }) => {
             }
             
             const cleanAddress = addressParts.join(', ');
-            console.log('Clean address from BigDataCloud:', cleanAddress);
             return cleanAddress;
           }
         }
       } catch (fallbackError) {
-        console.error('BigDataCloud fallback also failed:', fallbackError);
+        // Fallback failed silently
       }
       
       throw error; // Re-throw to trigger final fallback
@@ -556,11 +517,8 @@ const ReportGarbage = ({ navigation }) => {
   // Test function to get exact location name for any coordinates
   const testExactLocation = async (latitude, longitude) => {
     try {
-      console.log(`Testing exact location for: ${latitude}, ${longitude}`);
-      
       // Get the real address
       const realAddress = await getRealAddress(latitude, longitude);
-      console.log('EXACT LOCATION NAME:', realAddress);
       
       // Also show the full response for debugging
       const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10&addressdetails=1`;
@@ -574,13 +532,10 @@ const ReportGarbage = ({ navigation }) => {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('FULL ADDRESS DATA:', data.display_name);
-        console.log('ADDRESS COMPONENTS:', data.address);
       }
       
       return realAddress;
     } catch (error) {
-      console.error('Test location failed:', error);
       return 'Location lookup failed';
     }
   };
@@ -589,12 +544,9 @@ const ReportGarbage = ({ navigation }) => {
 
   const getIPBasedLocation = async () => {
     try {
-      console.log('Attempting IP-based location...');
-      
       // Check network connectivity
       const isConnected = await checkNetworkConnectivity();
       if (!isConnected) {
-        console.log('No internet connection for IP-based location');
         return null;
       }
       
@@ -608,12 +560,10 @@ const ReportGarbage = ({ navigation }) => {
       });
       
       if (!response.ok) {
-        console.log('IP geolocation service failed');
         return null;
       }
       
       const data = await response.json();
-      console.log('IP geolocation response:', data);
       
       if (data.latitude && data.longitude) {
         const address = `${data.city || 'Unknown City'}, ${data.region || 'Unknown Region'}, ${data.country_name || 'Unknown Country'}`;
@@ -626,7 +576,6 @@ const ReportGarbage = ({ navigation }) => {
       
       return null;
     } catch (error) {
-      console.error('IP-based location error:', error);
       return null;
     }
   };
@@ -651,26 +600,21 @@ const ReportGarbage = ({ navigation }) => {
       const state = await NetInfo.fetch();
       return state.isConnected && state.isInternetReachable;
     } catch (error) {
-      console.log('Network check failed:', error);
       return false;
     }
   };
 
   const getAddressFromCoordinates = async (latitude, longitude) => {
     try {
-      console.log('Attempting reverse geocoding for:', latitude, longitude);
       
       // Check network connectivity first
       const isConnected = await checkNetworkConnectivity();
       if (!isConnected) {
-        console.log('No internet connection, using offline location format');
         return createSimpleLocation(latitude, longitude);
       }
       
       // Use OpenStreetMap Nominatim for reverse geocoding
       const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=16&addressdetails=1&accept-language=en`;
-      
-      console.log('Requesting address from Nominatim...');
       
       const response = await fetch(nominatimUrl, {
         method: 'GET',
@@ -681,12 +625,10 @@ const ReportGarbage = ({ navigation }) => {
       });
       
       if (!response.ok) {
-        console.log('Nominatim request failed with status:', response.status);
         return createSimpleLocation(latitude, longitude);
       }
       
       const data = await response.json();
-      console.log('Nominatim response:', data);
       
       if (data.display_name) {
         // Simple address format - just use the display name
@@ -697,16 +639,13 @@ const ReportGarbage = ({ navigation }) => {
         const gpsCoords = createSimpleLocation(latitude, longitude).replace(' (GPS Coordinates)', '');
         const finalAddress = `${shortAddress}\n📍 ${gpsCoords}`;
         
-        console.log('Successfully obtained address:', finalAddress);
         return finalAddress;
       }
       
       // If no display_name, fallback to coordinates
-      console.log('No address data in response, using coordinates');
       return createSimpleLocation(latitude, longitude);
       
     } catch (error) {
-      console.error('Reverse geocoding failed:', error);
       // Return a simple coordinate-based location
       return createSimpleLocation(latitude, longitude);
     }
@@ -747,73 +686,32 @@ const ReportGarbage = ({ navigation }) => {
         if (coordsMatch) {
           latitude = parseFloat(coordsMatch[1]);
           longitude = parseFloat(coordsMatch[2]);
-          console.log('Extracted coordinates from location string:', latitude, longitude);
         }
       }
       
-      console.log('Final coordinates being sent:', latitude, longitude);
       formData.append('latitude', latitude.toString());
       formData.append('longitude', longitude.toString());
 
       // Get dynamic API endpoints
       const apiEndpoints = await getAPIEndpoints();
-      console.log('Sending report to:', apiEndpoints.SUBMIT_REPORT);
-      console.log('FormData contents:', {
-        hasImage: !!selectedImage,
-        description: description,
-        location: location,
-        latitude: latitude,
-        longitude: longitude
-      });
       
       const response = await fetch(apiEndpoints.SUBMIT_REPORT, {
         method: 'POST',
         body: formData,
-        // Remove Content-Type header - let the browser set it automatically for FormData
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
       const data = await response.json();
-      console.log('Response data:', data);
-      
       if (response.ok && data.success) {
-        Alert.alert(
-          'Report Submitted!', 
-          data.message || 'Your garbage report has been submitted successfully.',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                setSelectedImage(null);
-                setDescription('');
-                setLocation('');
-                if (navigation && navigation.goBack) {
-                  navigation.goBack();
-                }
-              },
-            },
-          ]
-        );
+        Alert.alert('Success', 'Report submitted successfully!');
+        resetForm();
       } else {
-        throw new Error(data.error || 'Failed to submit report');
+        Alert.alert('Error', data.error || 'Failed to submit report. Please try again.');
       }
     } catch (error) {
-      console.error('Error submitting report:', error);
-      console.error('Error details:', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack
-      });
-      
-      let errorMessage = 'Failed to submit report. Please try again.';
-      if (error.message.includes('Network request failed')) {
-        errorMessage = 'Network error: Cannot connect to server. Please check your internet connection.';
-      } else if (error.message.includes('fetch')) {
-        errorMessage = 'Connection error: Cannot reach the server. Please try again later.';
-      }
-      
-      Alert.alert('Error', errorMessage);
+      Alert.alert('Error', 'Failed to submit report. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -15,7 +15,6 @@ export const getLocalIPAddress = async () => {
     // Check cache first
     const now = Date.now();
     if (cachedLocalIP && (now - lastCacheTime) < CACHE_DURATION) {
-      console.log('🌐 Using cached IP:', cachedLocalIP);
       return cachedLocalIP;
     }
 
@@ -31,19 +30,16 @@ export const getLocalIPAddress = async () => {
 
     // Fallback methods if NetworkInfo fails
     if (!localIP) {
-      console.log('⚠️ NetworkInfo failed, trying fallback methods...');
-      
       // Try alternative methods
       try {
         localIP = await NetworkInfo.getIPAddress();
       } catch (error) {
-        console.log('❌ NetworkInfo.getIPAddress failed:', error);
+        // NetworkInfo.getIPAddress failed
       }
     }
 
     // If still no IP, use common localhost addresses
     if (!localIP) {
-      console.log('⚠️ No IP detected, using fallback localhost');
       localIP = '10.0.2.2'; // Android emulator default
     }
 
@@ -51,7 +47,6 @@ export const getLocalIPAddress = async () => {
     cachedLocalIP = localIP;
     lastCacheTime = now;
 
-    console.log('🌐 Detected local IP:', localIP);
     return localIP;
 
   } catch (error) {
@@ -88,7 +83,6 @@ export const testServerReachability = async (url) => {
     });
     return response.ok;
   } catch (error) {
-    console.log(`❌ Server not reachable at ${url}:`, error.message);
     return false;
   }
 };
@@ -107,18 +101,14 @@ export const findBestServerURL = async () => {
     'http://127.0.0.1:5000',
   ];
 
-  console.log('🔍 Testing server candidates:', candidates);
-
   for (const url of candidates) {
     const isReachable = await testServerReachability(url);
     if (isReachable) {
-      console.log('✅ Found working server:', url);
       return url;
     }
   }
 
   // If no local server is reachable, return the first candidate
-  console.log('⚠️ No local server reachable, using fallback');
   return candidates[0];
 };
 
@@ -128,7 +118,6 @@ export const findBestServerURL = async () => {
 export const clearIPCache = () => {
   cachedLocalIP = null;
   lastCacheTime = 0;
-  console.log('🗑️ IP cache cleared');
 };
 
 /**

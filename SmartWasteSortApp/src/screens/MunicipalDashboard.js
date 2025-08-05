@@ -41,9 +41,7 @@ const MunicipalDashboard = ({ navigation }) => {
       const apiEndpoints = await getAPIEndpoints();
       const response = await fetch(apiEndpoints.HEALTH);
       const data = await response.json();
-      console.log('Backend health check:', data);
     } catch (error) {
-      console.log('Backend connection failed:', error);
       Alert.alert('Connection Error', 'Cannot connect to backend server. Please check if the server is running.');
     }
   };
@@ -55,8 +53,6 @@ const MunicipalDashboard = ({ navigation }) => {
       const endpoints = await getAPIEndpoints();
       setApiEndpoints(endpoints);
       
-      console.log('🔍 Loading reports from:', endpoints.DASHBOARD);
-      
       // Make API call to your Flask backend
       const response = await fetch(endpoints.DASHBOARD, {
         method: 'GET',
@@ -65,24 +61,17 @@ const MunicipalDashboard = ({ navigation }) => {
         },
       });
 
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response headers:', response.headers);
-
       const data = await response.json();
-      console.log('📊 Dashboard API response:', data);
 
       if (response.ok) {
         // Check if we have reports data
         if (data.recent_reports) {
-          console.log('✅ Reports loaded successfully:', data.recent_reports.length, 'reports');
           setReports(data.recent_reports);
         } else if (data.success === false) {
           // Handle explicit error response
-          console.error('❌ API Error:', data);
           throw new Error(data.error || data.message || 'Failed to load reports');
         } else {
           // Handle empty response
-          console.log('📭 No reports found');
           setReports([]);
         }
       } else {
@@ -190,16 +179,10 @@ const MunicipalDashboard = ({ navigation }) => {
       const apiEndpoints = await getAPIEndpoints();
       const imageUrl = apiEndpoints.GET_IMAGE(report._id || report.id);
       
-      console.log('Image URL:', imageUrl);
-      console.log('Report object:', report);
-      
       // Test the image URL first
       const response = await fetch(imageUrl);
-      console.log('Image response status:', response.status);
-      console.log('Image response headers:', response.headers);
       
       if (!response.ok) {
-        console.log('Image not found or error:', response.statusText);
         // Show a more user-friendly message
         Alert.alert(
           'Image Not Available', 
@@ -210,7 +193,6 @@ const MunicipalDashboard = ({ navigation }) => {
         );
         return;
       } else {
-        console.log('Image URL is accessible - loading from MongoDB');
         // Image is available, show it
         setSelectedImage({
           url: imageUrl,
@@ -219,7 +201,6 @@ const MunicipalDashboard = ({ navigation }) => {
         setShowImageModal(true);
       }
     } catch (error) {
-      console.log('Image fetch error:', error);
       Alert.alert(
         'Image Error', 
         'Cannot load the image for this report. The image may not be available.',
@@ -364,10 +345,9 @@ const MunicipalDashboard = ({ navigation }) => {
                          resizeMode="cover"
                          onLoadStart={() => setImageLoading(prev => ({ ...prev, [report._id || report.id]: true }))}
                          onLoadEnd={() => setImageLoading(prev => ({ ...prev, [report._id || report.id]: false }))}
-                         onError={(error) => {
-                           console.log('Thumbnail loading error:', error);
-                           setImageLoading(prev => ({ ...prev, [report._id || report.id]: false }));
-                         }}
+                                                   onError={(error) => {
+                            setImageLoading(prev => ({ ...prev, [report._id || report.id]: false }));
+                          }}
                        />
                       {imageLoading[report._id || report.id] && (
                         <View style={styles.imageLoadingOverlay}>
@@ -473,9 +453,9 @@ const MunicipalDashboard = ({ navigation }) => {
                        }}
                        style={styles.modalImageContent}
                        resizeMode="cover"
-                       onError={(error) => {
-                         console.log('Image loading error:', error);
-                       }}
+                                               onError={(error) => {
+                          // Image loading error
+                        }}
                      />
                     <View style={styles.modalImageOverlay}>
                       <Feather name="zoom-in" size={24} color="#FFFFFF" />
@@ -603,21 +583,18 @@ const MunicipalDashboard = ({ navigation }) => {
                            source={{ uri: selectedImage.url }}
                            style={styles.fullScreenImage}
                            resizeMode="contain"
-                           onLoadStart={() => console.log('Image loading started')}
-                           onLoadEnd={() => console.log('Image loading ended')}
-                           onError={(error) => {
-                             console.log('Full screen image loading error:', error);
-                             Alert.alert(
-                               'Image Error', 
-                               'Failed to load image. The image may not be available or there might be a network issue.',
-                               [
-                                 { 
-                                   text: 'OK', 
-                                   onPress: () => closeImageModal() 
-                                 }
-                               ]
-                             );
-                           }}
+                                                       onError={(error) => {
+                              Alert.alert(
+                                'Image Error', 
+                                'Failed to load image. The image may not be available or there might be a network issue.',
+                                [
+                                  {
+                                    text: 'OK', 
+                                    onPress: () => closeImageModal() 
+                                  }
+                                ]
+                              );
+                            }}
                          />
                          <Text style={styles.imageUrlText}>{selectedImage.type || 'Garbage Report'}</Text>
                        </View>

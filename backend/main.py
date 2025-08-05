@@ -34,11 +34,8 @@ def connect_mongodb():
         client.admin.command('ping')
         db = client[DB_NAME]
         requests_collection = db.requests
-        print("✅ MongoDB connected successfully")
         return True
     except Exception as e:
-        print(f"❌ MongoDB connection failed: {e}")
-        print("💡 Make sure MongoDB is installed and running")
         client = None
         db = None
         requests_collection = None
@@ -51,10 +48,6 @@ connect_mongodb()
 # It's highly recommended to set your API key as an environment variable
 # for security.
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") # Leave empty if not using a key
-if not GEMINI_API_KEY:
-    print("⚠️ WARNING: GEMINI_API_KEY environment variable not set.")
-else:
-    print("✅ GEMINI_API_KEY is configured and ready to use.")
 
 # Gemini API URL
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent"
@@ -68,7 +61,6 @@ def get_youtube_suggestions(item_name):
     YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
     
     if not YOUTUBE_API_KEY:
-        print("⚠️ WARNING: YOUTUBE_API_KEY environment variable not set.")
         return get_fallback_suggestions(item_name)
     
     try:
@@ -149,10 +141,8 @@ def get_youtube_suggestions(item_name):
         return suggestions
         
     except requests.exceptions.RequestException as e:
-        print(f"❌ YouTube API Error: {e}")
         return get_fallback_suggestions(item_name)
     except Exception as e:
-        print(f"❌ Error processing YouTube API response: {e}")
         return get_fallback_suggestions(item_name)
 
 def get_fallback_suggestions(item_name):
@@ -190,10 +180,6 @@ def get_fallback_detection():
 def get_specific_disposal_info_with_gemini(item_name):
     """Get specific disposal information using Gemini AI"""
     try:
-        print(f"🤖 Getting disposal info for: {item_name}")
-        print(f"🤖 Gemini URL: {GEMINI_URL}")
-        print(f"🤖 API Key available: {'Yes' if GEMINI_API_KEY else 'No'}")
-        
         prompt = f"""
         You are a waste management expert. For the specific waste item "{item_name}", provide a SHORT disposal method (1-2 lines maximum).
 
@@ -227,25 +213,21 @@ def get_specific_disposal_info_with_gemini(item_name):
         
         if response.status_code == 200:
             result = response.json()
-            print(f"🔍 Full Gemini response: {json.dumps(result, indent=2)}")
             if 'candidates' in result and len(result['candidates']) > 0:
                 content = result['candidates'][0]['content']['parts'][0]['text']
-                print(f"✅ Gemini disposal response: {content.strip()}")
                 return content.strip()
             else:
-                print(f"❌ No candidates in Gemini response: {result}")
+                pass
         else:
-            print(f"❌ Gemini API error: {response.status_code} - {response.text}")
+            pass
         
         return "General waste bin or local recycling facility"
     except Exception as e:
-        print(f"Error getting disposal info from Gemini: {e}")
         return "General waste bin or local recycling facility"
 
 def get_specific_eco_tips_with_gemini(item_name):
     """Get specific eco tips using Gemini AI"""
     try:
-        print(f"🌿 Getting eco tips for: {item_name}")
         prompt = f"""
         You are an environmental expert. For the specific waste item "{item_name}", provide 2-3 SHORT eco tips (1 line each).
 
@@ -276,10 +258,8 @@ def get_specific_eco_tips_with_gemini(item_name):
         
         if response.status_code == 200:
             result = response.json()
-            print(f"🔍 Full Gemini eco tips response: {json.dumps(result, indent=2)}")
             if 'candidates' in result and len(result['candidates']) > 0:
                 content = result['candidates'][0]['content']['parts'][0]['text']
-                print(f"✅ Gemini eco tips response: {content.strip()}")
                 try:
                     # Clean the content - remove any markdown formatting
                     cleaned_content = content.strip()
@@ -291,20 +271,17 @@ def get_specific_eco_tips_with_gemini(item_name):
                     # Try to parse as JSON array
                     tips = json.loads(cleaned_content)
                     if isinstance(tips, list) and len(tips) >= 2:
-                        print(f"✅ Parsed eco tips: {tips[:3]}")
                         return tips[:3]
                 except Exception as parse_error:
-                    print(f"⚠️ JSON parsing failed: {parse_error}")
                     # If not JSON, split by lines and take first 3
                     lines = content.strip().split('\n')
                     tips = [line.strip() for line in lines if line.strip() and not line.strip().startswith('```')][:3]
                     if tips:
-                        print(f"✅ Parsed eco tips from lines: {tips}")
                         return tips
             else:
-                print(f"❌ No candidates in Gemini eco tips response: {result}")
+                pass
         else:
-            print(f"❌ Gemini eco tips API error: {response.status_code} - {response.text}")
+            pass
         
         return [
             "Clean the item before recycling",
@@ -312,7 +289,6 @@ def get_specific_eco_tips_with_gemini(item_name):
             "Separate different materials"
         ]
     except Exception as e:
-        print(f"Error getting eco tips from Gemini: {e}")
         return [
             "Clean the item before recycling",
             "Check local recycling guidelines",
@@ -380,8 +356,6 @@ def detect_waste_from_image_gemini(image_bytes):
     for attempt in range(max_retries):
         try:
             api_url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-            print(f"🔍 Making API call to: {api_url} (attempt {attempt + 1}/{max_retries})")
-            print(f"🔑 Using API key: {GEMINI_API_KEY[:10]}...")
             
             response = requests.post(
                 api_url,
@@ -390,35 +364,23 @@ def detect_waste_from_image_gemini(image_bytes):
                 timeout=30  # Add timeout
             )
             
-            print(f"📡 Response status: {response.status_code}")
-            
             if response.status_code == 503:
-                print(f"❌ Service overloaded (503). Attempt {attempt + 1}/{max_retries}")
                 if attempt < max_retries - 1:
-                    print(f"⏳ Waiting {retry_delay} seconds before retry...")
-                    import time
                     time.sleep(retry_delay)
                     retry_delay *= 2  # Exponential backoff
                     continue
                 else:
-                    print("🔄 Gemini API overloaded, using fallback detection...")
                     return get_fallback_detection()
             
             if response.status_code == 429:
-                print(f"❌ API quota exceeded (429). Attempt {attempt + 1}/{max_retries}")
-                print("🔄 Using fallback detection due to quota limit...")
                 return get_fallback_detection()
             
             if response.status_code != 200:
-                print(f"❌ Error response: {response.text}")
                 if attempt < max_retries - 1:
-                    print(f"⏳ Retrying in {retry_delay} seconds...")
-                    import time
                     time.sleep(retry_delay)
                     retry_delay *= 2
                     continue
                 else:
-                    print("🔄 API call failed, using fallback detection...")
                     return get_fallback_detection()
             
             # 6. Extract and parse the content from the response
@@ -457,52 +419,35 @@ def detect_waste_from_image_gemini(image_bytes):
                         
                         # ALWAYS replace disposal info with specific info (force it)
                         if 'binDescription' in item:
-                            print(f"🔍 Original binDescription: {item['binDescription']}")
-                            print(f"🔍 Item name: {item['name']}")
                             new_disposal = get_specific_disposal_info_with_gemini(item['name'])
-                            print(f"✅ New disposal from Gemini: {new_disposal}")
                             item['binDescription'] = new_disposal
-                            print(f"✅ Updated binDescription: {item['binDescription']}")
                         
                         # ALWAYS replace eco tips with specific tips (force it)
                         if 'tips' in item:
-                            print(f"🔍 Original tips: {item['tips']}")
-                            print(f"🔍 Item name: {item['name']}")
                             new_tips = get_specific_eco_tips_with_gemini(item['name'])
-                            print(f"✅ New tips from Gemini: {new_tips}")
                             item['tips'] = new_tips
-                            print(f"✅ Updated tips: {item['tips']}")
                         
                         # Don't add YouTube suggestions here - they will be fetched separately
                         
                         processed_detections.append(item)
                     
-                    print(f"📱 FINAL DATA BEING SENT TO MOBILE: {json.dumps(processed_detections, indent=2)}")
                     return processed_detections
                 else:
                     # Handle cases where the API returns no candidates (e.g., safety blocks)
                     return {"error": "Analysis failed. The image might violate safety policies or could not be processed."}
 
             except (KeyError, IndexError, json.JSONDecodeError) as e:
-                print(f"❌ Error parsing Gemini response: {e}")
-                print(f"Raw response: {result}")
                 if attempt < max_retries - 1:
-                    print(f"⏳ Retrying in {retry_delay} seconds...")
-                    import time
                     time.sleep(retry_delay)
                     retry_delay *= 2
                     continue
                 else:
-                    print("🔄 Using fallback detection...")
                     return get_fallback_detection()
             
             break  # Success, exit retry loop
             
         except requests.exceptions.Timeout:
-            print(f"❌ Request timeout on attempt {attempt + 1}")
             if attempt < max_retries - 1:
-                print(f"⏳ Retrying in {retry_delay} seconds...")
-                import time
                 time.sleep(retry_delay)
                 retry_delay *= 2
                 continue
@@ -510,7 +455,6 @@ def detect_waste_from_image_gemini(image_bytes):
                 return {"error": "Request timed out. Please try again."}
     
     # If we get here, all retries failed
-    print("🔄 All retries failed, using fallback detection...")
     return get_fallback_detection()
 
 
@@ -557,13 +501,11 @@ def detect_waste_endpoint():
 def mobile_detect_waste_endpoint():
     """Mobile-optimized waste detection endpoint"""
     try:
-        print("📱 MOBILE DETECT ENDPOINT CALLED")
         if 'image' not in request.files:
             return jsonify({"error": "No image file provided"}), 400
 
         file = request.files['image']
         image_bytes = file.read()
-        print(f"📱 Image received, size: {len(image_bytes)} bytes")
         
         # Call the detection function
         analysis_result = detect_waste_from_image_gemini(image_bytes)
@@ -588,11 +530,9 @@ def mobile_detect_waste_endpoint():
             "timestamp": datetime.utcnow().isoformat()
         }
 
-        print(f"📱 SENDING TO MOBILE: {json.dumps(response_data, indent=2)}")
         return jsonify(response_data)
 
     except Exception as e:
-        print(f"❌ Mobile detection error: {e}")
         return jsonify({"error": "Detection failed", "details": str(e)}), 500
 
 @app.route('/api/mobile/report-garbage', methods=['POST'])
@@ -600,10 +540,6 @@ def mobile_report_garbage_endpoint():
     """Mobile-optimized garbage reporting endpoint"""
     try:
         # Handle both form data and JSON data
-        print(f"🔍 Request content-type: {request.content_type}")
-        print(f"🔍 Request headers: {dict(request.headers)}")
-        print(f"🔍 Request files: {list(request.files.keys()) if request.files else 'No files'}")
-        print(f"🔍 Request form: {dict(request.form) if request.form else 'No form data'}")
         
         # Check if we have files (FormData) or JSON data
         if request.files and 'image' in request.files:
@@ -632,7 +568,6 @@ def mobile_report_garbage_endpoint():
             
         else:
             # Fallback: try to get data from form or JSON
-            print("⚠️ Content-type not recognized, trying fallback...")
             
             if request.files:
                 file = request.files.get('image')
@@ -668,7 +603,6 @@ def mobile_report_garbage_endpoint():
             # Read image data as binary
             image_data = file.read()
             image_filename = file.filename
-            print(f"📸 Image stored in MongoDB: {image_filename} ({len(image_data)} bytes)")
         
         # Create report data
         report_data = {
@@ -736,11 +670,9 @@ def mobile_report_garbage_endpoint():
                     "report": report_data
                 }), 200
             except Exception as file_error:
-                print(f"❌ Error saving to file: {file_error}")
                 return jsonify({"error": "Failed to save report"}), 500
         
     except Exception as e:
-        print(f"❌ Mobile report error: {e}")
         return jsonify({"error": "Failed to submit report", "details": str(e)}), 500
 
 @app.route('/api/mobile/dashboard', methods=['GET'])
@@ -817,7 +749,6 @@ def mobile_dashboard_endpoint():
                 }), 200
         
     except Exception as e:
-        print(f"❌ Mobile dashboard error: {e}")
         return jsonify({"error": "Failed to fetch dashboard data"}), 500
 
 @app.route('/api/mobile/update-status', methods=['PUT'])
@@ -893,7 +824,6 @@ def mobile_update_status_endpoint():
             }), 200
         
     except Exception as e:
-        print(f"❌ Mobile status update error: {e}")
         return jsonify({"error": "Failed to update status"}), 500
 
 # --- Health Check Endpoint for Mobile App ---
@@ -973,8 +903,6 @@ def report_garbage_endpoint():
             result = requests_collection.insert_one(report_data)
             report_data["_id"] = str(result.inserted_id)
             
-            print(f"🗑️ Garbage report saved to MongoDB: {report_data}")
-            
             return jsonify({
                 "message": "Garbage report submitted successfully! Municipal authorities have been notified.",
                 "report": report_data
@@ -1012,18 +940,14 @@ def report_garbage_endpoint():
                 with open(reports_file, 'w') as f:
                     json.dump(existing_reports, f, indent=2)
                 
-                print(f"🗑️ Garbage report saved to file (MongoDB not available): {report_data}")
-                
                 return jsonify({
                     "message": "Garbage report submitted successfully! Municipal authorities have been notified. (Using file storage - MongoDB not available)",
                     "report": report_data
                 }), 200
             except Exception as file_error:
-                print(f"❌ Error saving to file: {file_error}")
                 return jsonify({"error": "Failed to save report"}), 500
         
     except Exception as e:
-        print(f"❌ Error processing garbage report: {e}")
         return jsonify({"error": "Failed to process report"}), 500
 
 @app.route('/api/youtube-suggestions', methods=['POST'])
@@ -1049,7 +973,6 @@ def youtube_suggestions_endpoint():
         })
         
     except Exception as e:
-        print(f"Error in youtube_suggestions_endpoint: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/api/gemini-classify', methods=['POST'])
@@ -1156,19 +1079,14 @@ def gemini_classification_endpoint():
                         raise ValueError("No JSON array found in response")
                         
                 except (json.JSONDecodeError, ValueError) as e:
-                    print(f"Error parsing Gemini response: {e}")
-                    print(f"Raw response: {content}")
                     # Fallback to simple classification
                     return gemini_classification_endpoint()
             else:
-                print("No candidates in Gemini response")
                 return gemini_classification_endpoint()
         else:
-            print(f"Gemini API error: {response.status_code} - {response.text}")
             return gemini_classification_endpoint()
             
     except Exception as e:
-        print(f"Error in Gemini classification endpoint: {e}")
         return jsonify({'error': 'Failed to classify items'}), 500
 
 @app.route('/api/requests', methods=['GET'])
@@ -1202,7 +1120,6 @@ def get_all_requests():
             return jsonify({"requests": requests_list}), 200
         
     except Exception as e:
-        print(f"❌ Error fetching requests: {e}")
         return jsonify({"error": "Failed to fetch requests"}), 500
 
 @app.route('/api/requests/<request_id>/status', methods=['PUT'])
@@ -1261,7 +1178,6 @@ def update_request_status(request_id):
             return jsonify({"message": f"Request {new_status} successfully"}), 200
         
     except Exception as e:
-        print(f"❌ Error updating request status: {e}")
         return jsonify({"error": "Failed to update request status"}), 500
 
 @app.route('/api/requests/stats', methods=['GET'])
@@ -1287,7 +1203,6 @@ def get_request_stats():
         return jsonify(stats), 200
         
     except Exception as e:
-        print(f"❌ Error fetching stats: {e}")
         return jsonify({"error": "Failed to fetch stats"}), 500
 
 @app.route('/api/requests/<request_id>/image', methods=['GET'])
@@ -1317,8 +1232,6 @@ def get_request_image(request_id):
                 content_type = 'image/png'
             else:
                 content_type = 'image/jpeg'  # Default
-            
-            print(f"📸 Serving image from MongoDB: {filename} ({len(image_data)} bytes)")
             
             # Return image data directly
             return Response(image_data, mimetype=content_type)
@@ -1363,7 +1276,6 @@ def get_request_image(request_id):
             return send_file(image_path, mimetype='image/*')
         
     except Exception as e:
-        print(f"❌ Error fetching image: {e}")
         return jsonify({"error": "Failed to fetch image"}), 500
 
 # --- Run the Server ---

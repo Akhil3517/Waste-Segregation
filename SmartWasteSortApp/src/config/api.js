@@ -36,12 +36,9 @@ const getBaseUrl = async () => {
 
   if (env === ENV.DEVELOPMENT) {
     // For development, dynamically find the best server
-    console.log('🔍 Resolving development server URL...');
     baseUrl = await findBestServerURL();
-    console.log('✅ Development server resolved:', baseUrl);
   } else if (env === ENV.PRODUCTION) {
     // For production, use the static Railway URL directly
-    console.log('🚀 Using production Railway server');
     baseUrl = API_URLS[env];
   } else {
     // For staging, use the configured URL
@@ -50,7 +47,6 @@ const getBaseUrl = async () => {
 
   // Cache the resolved URL
   resolvedUrls[env] = baseUrl;
-  console.log('📡 Final base URL:', baseUrl);
   return baseUrl;
 };
 
@@ -122,15 +118,11 @@ export const ENVIRONMENT = {
  */
 export const switchEnvironment = async (newEnv) => {
   if (Object.values(ENV).includes(newEnv)) {
-    console.log(`🔄 Switching from ${CURRENT_ENV} to ${newEnv}`);
-    
     // Clear resolved URLs cache
     resolvedUrls = {};
     
     // Update current environment (you might want to persist this)
     // CURRENT_ENV = newEnv; // Note: This would require restructuring
-    
-    console.log('✅ Environment switched, URL cache cleared');
   }
 };
 
@@ -139,7 +131,6 @@ export const switchEnvironment = async (newEnv) => {
  */
 export const clearURLCache = () => {
   resolvedUrls = {};
-  console.log('🗑️ URL cache cleared');
 };
 
 /**

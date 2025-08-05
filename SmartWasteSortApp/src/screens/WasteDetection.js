@@ -30,10 +30,8 @@ const WasteDetection = ({ navigation }) => {
       
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
         setHasCameraPermission(true);
-        console.log('Camera permission granted');
       } else {
         setHasCameraPermission(false);
-        console.log('Camera permission denied');
       }
     } catch (err) {
       console.error('Error requesting camera permission:', err);
@@ -98,9 +96,8 @@ const WasteDetection = ({ navigation }) => {
 
       // Get dynamic API endpoints
       const apiEndpoints = await getAPIEndpoints();
-      console.log('Sending request to:', apiEndpoints.WASTE_DETECTION);
       
-              const response = await fetch(apiEndpoints.WASTE_DETECTION, {
+      const response = await fetch(apiEndpoints.WASTE_DETECTION, {
         method: 'POST',
         body: formData,
         headers: {
@@ -108,9 +105,7 @@ const WasteDetection = ({ navigation }) => {
         },
       });
 
-      console.log('Response status:', response.status);
       const data = await response.json();
-      console.log('Response data:', data);
       
       if (response.ok) {
         // Handle different response formats
@@ -124,7 +119,6 @@ const WasteDetection = ({ navigation }) => {
         }
         
         // Use the results directly from the backend (they already have binDescription and tips)
-        console.log('All detected items:', results);
         setDetectionResults(results);
         setShowResults(true);
       } else {
