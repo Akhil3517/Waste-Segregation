@@ -681,8 +681,8 @@ def mobile_report_garbage_endpoint():
             "image_filename": image_filename,
             "image_data": image_data,  # Store binary image data directly in MongoDB
             "status": "pending",
-            "createdAt": datetime.now(datetime.UTC),
-            "updatedAt": datetime.now(datetime.UTC),
+            "createdAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow(),
             "source": "mobile_app"
         }
         
