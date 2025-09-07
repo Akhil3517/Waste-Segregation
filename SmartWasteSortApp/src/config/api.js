@@ -13,7 +13,7 @@ const CURRENT_ENV = ENV.PRODUCTION;
 // Dynamic API Base URLs - will be resolved at runtime
 const API_URLS = {
   [ENV.DEVELOPMENT]: null, // Will be dynamically resolved
-  [ENV.PRODUCTION]: 'https://waste-segregation-production.up.railway.app', // Railway deployment
+  [ENV.PRODUCTION]: 'https://waste-segregation-dz7r.onrender.com', // Render deployment
   [ENV.STAGING]: 'https://your-staging-backend.herokuapp.com', // Replace with your staging URL
 };
 

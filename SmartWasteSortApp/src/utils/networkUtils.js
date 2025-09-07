@@ -15,6 +15,7 @@ export const getLocalIPAddress = async () => {
     // Check cache first
     const now = Date.now();
     if (cachedLocalIP && (now - lastCacheTime) < CACHE_DURATION) {
+      console.log('🌐 Using cached IP:', cachedLocalIP);
       return cachedLocalIP;
     }
 
@@ -30,16 +31,19 @@ export const getLocalIPAddress = async () => {
 
     // Fallback methods if NetworkInfo fails
     if (!localIP) {
+      console.log('⚠️ NetworkInfo failed, trying fallback methods...');
+      
       // Try alternative methods
       try {
         localIP = await NetworkInfo.getIPAddress();
       } catch (error) {
-        // NetworkInfo.getIPAddress failed
+        console.log('❌ NetworkInfo.getIPAddress failed:', error);
       }
     }
 
     // If still no IP, use common localhost addresses
     if (!localIP) {
+      console.log('⚠️ No IP detected, using fallback localhost');
       localIP = '10.0.2.2'; // Android emulator default
     }
 
@@ -47,6 +51,7 @@ export const getLocalIPAddress = async () => {
     cachedLocalIP = localIP;
     lastCacheTime = now;
 
+    console.log('🌐 Detected local IP:', localIP);
     return localIP;
 
   } catch (error) {
@@ -77,12 +82,22 @@ export const getDevelopmentServerURL = async () => {
  */
 export const testServerReachability = async (url) => {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000); // 2 second timeout for faster response
+    
     const response = await fetch(`${url}/api/health`, {
       method: 'GET',
-      timeout: 5000,
+      signal: controller.signal,
     });
+    
+    clearTimeout(timeoutId);
     return response.ok;
   } catch (error) {
+    if (error.name === 'AbortError') {
+      console.log(`⏰ Server timeout at ${url}`);
+    } else {
+      console.log(`❌ Server not reachable at ${url}:`, error.message);
+    }
     return false;
   }
 };
@@ -92,24 +107,45 @@ export const testServerReachability = async (url) => {
  * @returns {Promise<string>} The best available server URL
  */
 export const findBestServerURL = async () => {
-  const candidates = [
-    // Try local development server first
-    await getDevelopmentServerURL(),
-    // Fallback to common localhost addresses
-    'http://localhost:5000',
-    'http://10.0.2.2:5000', // Android emulator
-    'http://127.0.0.1:5000',
-  ];
-
-  for (const url of candidates) {
-    const isReachable = await testServerReachability(url);
-    if (isReachable) {
-      return url;
+  try {
+    // For mobile data compatibility, always try production first
+    console.log('🌐 Checking network connectivity...');
+    
+    // Try production server first (works on any network)
+    const productionUrl = 'https://waste-segregation-dz7r.onrender.com';
+    const isProductionReachable = await testServerReachability(productionUrl);
+    
+    if (isProductionReachable) {
+      console.log('✅ Production server is reachable');
+      return productionUrl;
     }
-  }
 
-  // If no local server is reachable, return the first candidate
-  return candidates[0];
+    // If production fails, try local development servers
+    const candidates = [
+      await getDevelopmentServerURL(),
+      'http://localhost:5000',
+      'http://10.0.2.2:5000', // Android emulator
+      'http://127.0.0.1:5000',
+    ];
+
+    console.log('🔍 Testing local server candidates:', candidates);
+
+    for (const url of candidates) {
+      const isReachable = await testServerReachability(url);
+      if (isReachable) {
+        console.log('✅ Found working local server:', url);
+        return url;
+      }
+    }
+
+    // If nothing works, return production as fallback
+    console.log('⚠️ No servers reachable, using production as fallback');
+    return productionUrl;
+  } catch (error) {
+    console.error('❌ Error in findBestServerURL:', error);
+    // Always fallback to production server
+    return 'https://waste-segregation-dz7r.onrender.com';
+  }
 };
 
 /**
@@ -118,6 +154,7 @@ export const findBestServerURL = async () => {
 export const clearIPCache = () => {
   cachedLocalIP = null;
   lastCacheTime = 0;
+  console.log('🗑️ IP cache cleared');
 };
 
 /**
@@ -133,9 +170,26 @@ export const getNetworkInfo = async () => {
       gateway: await NetworkInfo.getGatewayIPAddress(),
       subnet: await NetworkInfo.getSubnet(),
     };
+    
+    // Log network info for debugging
+    console.log('📡 Network Info:', {
+      ip: info.ip,
+      ssid: info.ssid,
+      bssid: info.bssid,
+      gateway: info.gateway,
+      subnet: info.subnet,
+    });
+    
     return info;
   } catch (error) {
     console.error('❌ Error getting network info:', error);
-    return null;
+    // Return default values indicating mobile data
+    return {
+      ip: null,
+      ssid: null,
+      bssid: null,
+      gateway: null,
+      subnet: null,
+    };
   }
 }; 
