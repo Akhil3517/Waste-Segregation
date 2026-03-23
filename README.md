@@ -2,7 +2,7 @@
 
 A comprehensive mobile application that helps users identify, sort, and report waste using AI-powered detection and location services.
 
-## 🌟 Features
+##  Features
 
 ### Core Functionality
 - **AI-Powered Waste Detection**: Uses machine learning to identify different types of waste from photos
@@ -18,7 +18,7 @@ A comprehensive mobile application that helps users identify, sort, and report w
 - **Persistent Data Storage**: All reports and images stored securely in MongoDB
 - **Offline-Ready Architecture**: Graceful handling of network connectivity issues
 
-## 🏗️ Architecture
+##  Architecture
 
 ### Frontend (React Native)
 - **Framework**: React Native with Expo
@@ -44,11 +44,10 @@ A comprehensive mobile application that helps users identify, sort, and report w
 - **RecycleMe**: Educational content and YouTube integration
 - **Scanner**: Camera interface for waste scanning
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js (v16 or higher)
-- Python (v3.8 or higher)
 - MongoDB Atlas account
 - Railway account (for deployment)
 - Android Studio (for Android development)
@@ -81,7 +80,7 @@ A comprehensive mobile application that helps users identify, sort, and report w
 2. **Railway Deployment**: Deploy backend to Railway for production
 3. **API Configuration**: Update `src/config/api.js` with your endpoints
 
-## 📱 Usage
+## Usage
 
 ### For Citizens
 1. **Report Waste**: Take a photo of waste, add location, and submit report
@@ -95,7 +94,7 @@ A comprehensive mobile application that helps users identify, sort, and report w
 3. **Location Tracking**: See exact locations of reported waste
 4. **Report Management**: Update report status and assign cleanup tasks
 
-## 🔧 Technical Implementation
+## Technical Implementation
 
 ### Dynamic Network Detection
 The app automatically detects the best available server:
@@ -117,14 +116,14 @@ The app automatically detects the best available server:
 4. **Fallback Handling**: Graceful degradation if location unavailable
 
 
-## 🔒 Security & Privacy
+##  Security & Privacy
 
 - **Data Encryption**: All data transmitted over HTTPS
 - **Image Privacy**: Images stored securely in MongoDB
 - **Location Privacy**: GPS coordinates only used for waste reporting
 - **No Personal Data**: App doesn't collect personal information
 
-## 📊 Performance
+## Performance
 
 - **Image Upload**: Optimized for mobile networks
 - **Server Response**: 2-second timeout for quick feedback
